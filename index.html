@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Speech color changer</h1>
+    <p>Tap/click then say a color to change the background color of the app.</p>
+    <div>
+        <p class="output"><em>…diagnostic messages</em></p>
+    </div>
+
+    <div class="hints">
+
+    </div>
+
+    <script>
+        const SpeechRecognition =
+            window.SpeechRecognition || window.webkitSpeechRecognition;
+        const SpeechGrammarList =
+            window.SpeechGrammarList || window.webkitSpeechGrammarList;
+        const SpeechRecognitionEvent =
+            window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
+
+        const colorsPt = [
+            'verde',
+            'vermelho',
+            "azul",
+            'marrom',
+            'preto',
+            'roxo'
+        ];
+        const colors = [
+            'green',
+            'red',
+            'blue', 'brown', 'black', 'purple'
+        ];
+        const grammar = `#JSGF V1.0; grammar colors; public <color> = ${colorsPt.join(
+            " | ",
+        )};`;
+
+        const recognition = new SpeechRecognition();
+        const speechRecognitionList = new SpeechGrammarList();
+
+        speechRecognitionList.addFromString(grammar, 1);
+
+        recognition.grammars = speechRecognitionList;
+        recognition.continuous = true;
+        recognition.lang = "pt-BR";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        const diagnostic = document.querySelector(".output");
+        const bg = document.querySelector("html");
+        const hints = document.querySelector(".hints");
+
+        let colorHTML = "";
+        colors.forEach((color, i) => {
+            console.log(color, i);
+            colorHTML += `<span style="background-color:${color};"> ${color} </span>`;
+        });
+        hints.innerHTML = `Tap or click then say a color to change the background color of the app. Try ${colorHTML}.`;
+
+        document.body.onclick = () => {
+            recognition.start();
+            console.log("Ready to receive a color command.");
+        };
+
+        recognition.onresult = (event) => {
+            const color = event.results[event.results.length - 1][event.results[event.results.length - 1].length - 1].transcript.toLowerCase().trim();
+
+            console.log(color);
+
+            //console.log(color, colors);
+
+            const index = colorsPt.findIndex(cor => cor == color);
+            diagnostic.textContent = `Result received: ${color}.`;
+            bg.style.backgroundColor = colors[index];
+            console.log(`Confidence: ${event.results[0][0].confidence}`);
+        };
+
+        recognition.onspeechend = () => {
+            recognition.stop();
+        };
+
+        recognition.onnomatch = (event) => {
+            diagnostic.textContent = "I didn't recognize that color.";
+        };
+
+        recognition.onerror = (event) => {
+            diagnostic.textContent = `Error occurred in recognition: ${event.error}`;
+        };
+
+    </script>
+</body>
+
+</html>
